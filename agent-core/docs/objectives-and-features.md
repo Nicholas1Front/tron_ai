@@ -4,7 +4,7 @@
 
 O Tron AI será um agente pessoal de inteligência artificial com arquitetura modular.
 
-A primeira versão será focada em um aplicativo local, com o Agent Core executando na máquina do usuário e a OpenAI como motor de inteligência.
+A primeira versão será focada em um aplicativo local, com o Agent Core executando na máquina do usuário e um AI Provider inicial baseado na Gemini API.
 
 O projeto deverá permitir que diferentes pessoas utilizem o Tron, mantendo separadas suas preferências, memórias, permissões, conversas e integrações.
 
@@ -13,7 +13,8 @@ Este documento apresenta uma visão inicial. As funcionalidades, prioridades e d
 ## Objetivos principais
 
 - Criar um agente pessoal capaz de conversar por texto e, futuramente, por voz.
-- Utilizar a OpenAI como motor de inteligência do agente.
+- Utilizar um sistema de AI Providers para permitir evolução e substituição do provedor de inteligência.
+- Começar com a Gemini API no nível sem custo financeiro disponível.
 - Executar o Agent Core localmente.
 - Manter uma arquitetura modular baseada em Skills.
 - Permitir que novas capacidades sejam adicionadas sem modificar todo o Core.
@@ -31,8 +32,24 @@ Este documento apresenta uma visão inicial. As funcionalidades, prioridades e d
 - Conversar com o usuário por texto.
 - Suportar voz futuramente.
 - Manter o contexto da conversa atual.
-- Gerar respostas através da OpenAI.
-- Permitir que a OpenAI utilize Skills quando necessário.
+- Gerar respostas através do AI Provider selecionado.
+- Permitir que o modelo utilize Skills quando necessário.
+
+### AI Providers
+
+O Tron deverá possuir uma camada de providers para separar o Agent Core dos SDKs e APIs específicos de cada serviço.
+
+O primeiro provider será o Gemini.
+
+Providers futuros poderão incluir:
+
+- outros serviços comerciais;
+- modelos locais;
+- outros runtimes de IA.
+
+Cada provider deverá ser implementado de acordo com sua documentação oficial. Limites, cotas, erros, retry, autenticação e recursos não devem ser presumidos como iguais entre providers.
+
+Quando houver mais de um provider, um Provider Manager poderá realizar a orquestração e o fallback de acordo com estados normalizados e políticas explícitas.
 
 ### Skills
 
@@ -91,7 +108,7 @@ Entre as possibilidades previstas estão:
 - confirmação de ações críticas;
 - proteção de credenciais;
 - validação dos argumentos enviados para Skills;
-- separação entre o que a OpenAI pode solicitar e o que o Core pode executar.
+- separação entre o que o modelo pode solicitar e o que o Core pode executar.
 
 ### Integrações
 
@@ -126,7 +143,8 @@ A intenção é que ele utilize o mesmo conceito de Agent Core e mantenha a expe
 
 Não serão tomadas decisões antecipadas sobre:
 
-- modelo específico da OpenAI;
+- todos os providers futuros;
+- provider manager completo;
 - banco de dados definitivo;
 - sistema definitivo de memória;
 - sistema definitivo de voz;
@@ -142,5 +160,7 @@ Esses pontos serão definidos quando o módulo correspondente for desenvolvido.
 O Tron será desenvolvido por módulos.
 
 Cada nova etapa deverá definir seus próprios requisitos, contratos, dependências, segurança e testes antes da implementação.
+
+Para novos AI Providers, a documentação oficial do serviço deverá ser analisada antes da implementação, principalmente quanto a limites, cotas, erros, retry, autenticação e capacidades específicas.
 
 Este documento representa apenas a visão inicial do projeto e pode ser atualizado conforme o Tron evoluir.
