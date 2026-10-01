@@ -2,17 +2,22 @@
 
 ## Primeira entrega
 
-O runtime inicial tem uma responsabilidade simples: disponibilizar o Agent Core como um processo local que pode receber requisições e devolver respostas estruturadas.
+O runtime inicial disponibiliza o Agent Core como um processo local que pode receber requisições e devolver respostas estruturadas.
 
-Nesta etapa ainda não existem:
+Nesta etapa estão sendo adicionados:
 
-- integração com a OpenAI;
+- AI Provider inicial baseado na Gemini API;
+- contrato provider-neutral para comunicação com o modelo.
+
+Ainda não existem:
+
 - Skills;
 - memória;
 - banco de dados;
 - permissões;
 - credenciais;
-- voz.
+- voz;
+- Provider Manager.
 
 Esses recursos serão adicionados conforme seus contratos forem definidos.
 
@@ -22,6 +27,22 @@ Esses recursos serão adicionados conforme seus contratos forem definidos.
 - TypeScript: linguagem e tipagem.
 - Fastify: servidor HTTP local.
 - Zod: validação dos dados recebidos.
+- `@google/genai`: SDK oficial do Google GenAI para o provider Gemini.
+
+A API Interactions do Gemini é utilizada para a primeira integração, pois é a interface recomendada pelo Google para novos projetos e agentes. citeturn0search3
+
+## Configuração
+
+O Agent Core utiliza:
+
+- `GEMINI_API_KEY`: chave da Gemini API;
+- `GEMINI_MODEL`: modelo utilizado pelo Gemini Provider.
+
+O modelo padrão inicial é `gemini-3.8-flash`, que atualmente possui acesso no nível sem custo financeiro para uso padrão. Os limites de uso continuam sujeitos às cotas e limites do projeto. citeturn1search2turn0search8
+
+As variáveis são carregadas a partir do arquivo `.env` durante o desenvolvimento.
+
+O arquivo `.env` não deve ser versionado.
 
 ## Comunicação inicial
 
@@ -47,7 +68,7 @@ Exemplo de entrada:
 }
 ```
 
-A resposta inicial possui o formato:
+A resposta possui o formato:
 
 ```json
 {
@@ -55,7 +76,7 @@ A resposta inicial possui o formato:
   "data": {
     "requestId": "uuid",
     "userId": "user-123",
-    "content": "Agent Core inicializado. O processamento com a OpenAI será implementado nas próximas etapas."
+    "content": "Resposta gerada pelo AI Provider."
   }
 }
 ```
@@ -74,6 +95,22 @@ Agent Core
 
 Posteriormente poderemos avaliar IPC nativo do Electron, WebSocket ou outro mecanismo caso exista uma necessidade real. A decisão não é definitiva nesta etapa.
 
+## Provider Manager
+
+O Provider Manager ainda não faz parte da implementação atual.
+
+Quando houver múltiplos providers, ele deverá:
+
+- receber estados normalizados dos adapters;
+- considerar disponibilidade, limites e cooldowns;
+- aplicar uma política explícita de seleção;
+- evitar fallback indiscriminado;
+- impedir que um provider pago seja utilizado acidentalmente quando a política estiver configurada para uso gratuito.
+
+As regras específicas de cada provider permanecerão nos respectivos adapters.
+
 ## Próximo passo
 
-O próximo módulo deverá substituir a resposta fixa pela integração com a OpenAI, mantendo o Core como responsável pela orquestração.
+Depois de validar a primeira chamada real ao Gemini, a próxima evolução do provider deverá tratar especificamente os erros, limites e retry documentados pela Gemini API.
+
+Somente depois de existir mais de um provider fará sentido implementar o Provider Manager.
