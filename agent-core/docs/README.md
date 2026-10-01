@@ -2,13 +2,11 @@
 
 ## Objetivo
 
-O Agent Core é o núcleo responsável por receber uma solicitação, preparar o contexto necessário, conversar com a OpenAI, controlar o uso de Skills e devolver a resposta ao usuário.
+O Agent Core é o núcleo responsável por receber uma solicitação, preparar o contexto necessário, conversar com um **AI Provider**, controlar o uso de Skills e devolver a resposta ao usuário.
 
-Este documento define o comportamento esperado do Core e sua relação com o restante do Tron AI. Ele é uma referência inicial e poderá ser alterado quando novas decisões forem tomadas durante o desenvolvimento.
+Este documento define o comportamento esperado do Core e sua relação com o restante do Tron AI. Ele é uma referência inicial e deverá ser atualizado quando novas decisões forem tomadas durante o desenvolvimento.
 
 ## Fluxo de uma requisição
-
-O fluxo esperado é:
 
 ```text
 Entrada do usuário
@@ -19,9 +17,9 @@ Criação do contexto da requisição
     ↓
 Recuperação de contexto e memória relevante
     ↓
-Disponibilização das Skills para a OpenAI
+Seleção do AI Provider
     ↓
-Requisição para a OpenAI
+Envio da requisição ao modelo
     ↓
 Resposta final ou Tool Call
     ↓
@@ -32,7 +30,7 @@ Se houver Tool Call:
     ├── solicitar confirmação quando necessário
     ├── resolver credenciais
     ├── executar a Skill
-    └── enviar o resultado novamente para a OpenAI
+    └── enviar o resultado novamente ao AI Provider
     ↓
 Resposta final
     ↓
@@ -49,15 +47,15 @@ O Core é responsável por:
 - identificar o usuário da requisição;
 - criar e controlar o contexto da execução;
 - recuperar informações de memória quando forem relevantes;
-- disponibilizar as Skills para a OpenAI;
-- enviar e receber mensagens da OpenAI;
+- disponibilizar as Skills ao AI Provider;
+- enviar e receber mensagens através do AI Provider;
 - processar Tool Calls;
 - validar Skills e argumentos;
 - verificar permissões;
 - controlar confirmações de ações sensíveis ou críticas;
 - resolver credenciais necessárias para integrações;
 - executar Skills através de seus contratos;
-- devolver resultados das Skills para a OpenAI;
+- devolver resultados das Skills ao AI Provider;
 - entregar a resposta final ao cliente;
 - controlar o ciclo de vida da requisição;
 - persistir informações que realmente precisam sobreviver ao encerramento da requisição.
@@ -68,22 +66,147 @@ O Core não deve:
 
 - renderizar a interface do usuário;
 - implementar a lógica específica de cada integração;
-- permitir que a OpenAI execute código arbitrário diretamente;
+- permitir que o modelo execute código arbitrário diretamente;
 - armazenar credenciais de serviços como texto comum no banco;
-- deixar que a OpenAI ignore as regras de permissão;
+- deixar que o modelo ignore as regras de permissão;
 - assumir que toda informação precisa virar memória;
-- tratar uma integração externa como se fosse parte do próprio Core.
+- tratar uma integração externa como se fosse parte do próprio Core;
+- conhecer detalhes internos específicos de cada provedor de IA quando esses detalhes pertencem ao adapter do provider.
 
-## OpenAI
+## AI Providers
 
-A OpenAI será o motor de inteligência do Tron nesta primeira fase.
+Um **AI Provider** é a implementação responsável por conversar com um provedor externo ou local de inteligência.
 
-O modelo poderá decidir quando precisa utilizar uma Skill, mas não executará a Skill diretamente.
+Exemplos futuros:
+
+- Gemini;
+- OpenAI;
+- modelos locais;
+- outros provedores que sejam adicionados posteriormente.
+
+O Agent Core não deve depender diretamente do SDK de um provider.
+
+O Core deve depender de um contrato pequeno e provider-neutral, enquanto cada implementação concreta conhece as particularidades do seu próprio provedor.
+
+### Princípio
+
+```text
+Agent Core
+    ↓
+AI Provider contract
+    ↓
+GeminiProvider / OpenAIProvider / LocalProvider / ...
+    ↓
+API ou runtime específico
+```
+
+A existência de um contrato comum **não significa que todos os providers terão o mesmo comportamento interno**.
+
+Cada provider deverá ser analisado individualmente antes de sua implementação, utilizando sua documentação oficial para definir, quando aplicável:
+
+- modelos disponíveis;
+- limites de requisições;
+- limites de tokens;
+- cotas diárias;
+- autenticação;
+- códigos e formatos de erro;
+- erros transitórios;
+- erros permanentes;
+- política de retry;
+- backoff e jitter;
+- tempo de espera ou cooldown;
+- recursos de tool/function calling;
+- estado de conversa;
+- streaming;
+- restrições específicas;
+- informações necessárias para que o Core consiga interpretar corretamente seu estado.
+
+Essas regras devem permanecer dentro do adapter do provider quando forem específicas daquele serviço.
+
+### Contrato versus implementação
+
+O contrato deve representar somente o comportamento comum que o Agent Core realmente precisa.
+
+Não devemos criar um contrato genérico tentando esconder todas as diferenças entre providers.
+
+Se um provider possuir uma capacidade que outro não possui, essa diferença deverá ser tratada explicitamente pela arquitetura quando a funcionalidade correspondente for implementada.
+
+## Provider Manager
+
+No futuro, quando existir mais de um AI Provider, o Core deverá possuir um **Provider Manager** responsável por orquestrar a escolha e a utilização dos providers.
+
+O Provider Manager não deverá conhecer as regras internas de cada serviço.
+
+A arquitetura esperada é:
+
+```text
+Agent Core
+    ↓
+Provider Manager
+    ↓
+┌──────────────────────────────────────────┐
+│ GeminiProvider                            │
+│ OpenAIProvider                            │
+│ LocalProvider                             │
+│ Outros providers                          │
+└──────────────────────────────────────────┘
+```
+
+Cada provider deverá traduzir seu comportamento específico para estados que o Manager consiga compreender.
+
+Exemplos de estados normalizados:
+
+- `AVAILABLE`;
+- `RATE_LIMITED`;
+- `QUOTA_EXCEEDED`;
+- `TEMPORARY_ERROR`;
+- `AUTH_ERROR`;
+- `INVALID_REQUEST`;
+- `MODEL_UNAVAILABLE`.
+
+O Manager poderá usar esses estados para decidir se deve:
+
+- continuar usando o provider;
+- aguardar um cooldown;
+- tentar novamente;
+- selecionar outro provider;
+- interromper a execução;
+- informar o usuário.
+
+### Regra importante sobre fallback
+
+O Provider Manager **não deve trocar de provider indiscriminadamente diante de qualquer erro**.
+
+Exemplos:
+
+- erro de autenticação pode indicar configuração inválida e não deve ser tratado automaticamente como simples indisponibilidade;
+- solicitação inválida não deve ser repetida em outro provider sem que o Core corrija o problema;
+- limite temporário de requisições pode permitir retry ou fallback, dependendo da política definida;
+- cota diária excedida pode exigir cooldown até o reset ou outra decisão explícita;
+- indisponibilidade temporária pode permitir retry e/ou fallback.
+
+A decisão exata deverá ser definida com base no comportamento documentado de cada provider.
+
+### Regra de evolução
+
+Antes de adicionar um novo provider:
+
+1. estudar sua documentação oficial;
+2. identificar limites, cotas, erros, retry e recursos disponíveis;
+3. definir o comportamento específico do adapter;
+4. definir como os estados específicos serão normalizados;
+5. somente então integrar o provider ao Manager.
+
+O Manager deve ser genérico na **orquestração**, não genérico na interpretação de APIs que possuem comportamentos diferentes.
+
+## Modelo de inteligência
+
+O modelo pode decidir quando precisa utilizar uma Skill, mas não executará a Skill diretamente.
 
 O fluxo será:
 
 ```text
-OpenAI
+AI Provider
   ↓
 Tool Call
   ↓
@@ -97,7 +220,7 @@ resultado
   ↓
 Agent Core
   ↓
-OpenAI
+AI Provider
 ```
 
 As regras de segurança e autorização pertencem ao Core e não podem ser substituídas pela decisão do modelo.
@@ -227,12 +350,12 @@ Quando uma informação precisar ser recuperada posteriormente, o Tron deverá c
 
 ## Princípio principal
 
-> A OpenAI decide o que precisa ser feito; o Agent Core decide se e como isso pode ser feito; as Skills executam as ações.
+> O AI Provider fornece inteligência; o Agent Core decide se e como uma ação pode ser executada; as Skills executam as ações.
 
 Este princípio deve orientar as decisões de arquitetura do Tron AI.
 
 ## Documentação
 
-- [Contrato do Agent Core](README.md) — responsabilidades e fluxo do Core.
+- [Contrato do Agent Core](README.md) — responsabilidades, providers e fluxo do Core.
 - [Objetivos e funcionalidades](objectives-and-features.md) — visão inicial do produto.
 - [Runtime](runtime.md) — primeira implementação e comunicação local.
