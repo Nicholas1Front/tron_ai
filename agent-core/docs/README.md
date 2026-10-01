@@ -230,3 +230,9 @@ Quando uma informação precisar ser recuperada posteriormente, o Tron deverá c
 > A OpenAI decide o que precisa ser feito; o Agent Core decide se e como isso pode ser feito; as Skills executam as ações.
 
 Este princípio deve orientar as decisões de arquitetura do Tron AI.
+
+## Documentação
+
+- [Contrato do Agent Core](README.md) — responsabilidades e fluxo do Core.
+- [Objetivos e funcionalidades](objectives-and-features.md) — visão inicial do produto.
+- [Runtime](runtime.md) — primeira implementação e comunicação local.
