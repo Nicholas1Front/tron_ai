@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { AgentCore } from "../agent/agent-core.js";
+import { GeminiProvider } from "../ai/gemini-provider.js";
 
 const agentRequestSchema = z.object({
   userId: z.string().min(1),
@@ -16,7 +17,8 @@ export function buildApp(): FastifyInstance {
     logger: true,
   });
 
-  const agentCore = new AgentCore();
+  const aiProvider = new GeminiProvider();
+  const agentCore = new AgentCore(aiProvider);
 
   app.get("/health", async () => ({
     status: "ok",
