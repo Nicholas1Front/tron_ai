@@ -12,6 +12,12 @@ export class AgentCore {
       input: request.input.content,
     });
 
+    if (aiResponse.type === "tool_call") {
+      throw new Error(
+        "Tool calling is not implemented in AgentCore yet.",
+      );
+    }
+
     return {
       requestId,
       userId: request.userId,
