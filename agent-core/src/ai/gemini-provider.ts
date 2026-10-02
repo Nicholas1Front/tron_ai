@@ -21,6 +21,12 @@ export class GeminiProvider implements AIProvider {
   }
 
   async generate(request: AIRequest): Promise<AIResponse> {
+    if (typeof request.input !== "string") {
+      throw new Error(
+        "GeminiProvider does not yet support structured AI input.",
+      );
+    }
+
     const interaction = await this.client.interactions.create({
       model: this.model,
       input: request.input,
@@ -33,6 +39,7 @@ export class GeminiProvider implements AIProvider {
     }
 
     return {
+      type: "text",
       content,
     };
   }
