@@ -3,6 +3,15 @@ export type AgentInput = {
   content: string;
 };
 
+export type UserIdentity = {
+  userId: string;
+};
+
+export type AgentContext = {
+  requestId: string;
+  user: UserIdentity;
+};
+
 export type AgentRequest = {
   userId: string;
   input: AgentInput;
