@@ -37,7 +37,22 @@ Resposta final
 Entrega ao cliente
 ```
 
-Uma requisição pode utilizar várias Skills antes de chegar à resposta final.
+Uma requisição pode utilizar várias Tools antes de chegar à resposta final.
+
+## Contratos atuais
+
+Os contratos iniciais ficam em `src/types/`.
+
+- **UserIdentity:** identifica o usuário da execução.
+- **AgentContext:** carrega o contexto mínimo da execução atual.
+- **AIRequest:** representa a entrada enviada ao provider, incluindo entrada textual, resultados de Tools e Tools disponíveis.
+- **AIResponse:** representa uma resposta textual ou uma solicitação estruturada de Tool.
+- **AIToolCall:** identifica a Tool solicitada e seus argumentos.
+- **ToolDefinition:** descreve uma Tool, seu schema de entrada e seu nível de risco.
+- **ToolContext:** leva identidade e request até a execução da Tool sem acoplar a Tool ao HTTP.
+- **ToolResult:** representa sucesso ou erro da execução.
+
+Os argumentos produzidos pelo modelo são tratados como entrada não confiável até serem validados pelo Core.
 
 ## Responsabilidades do Core
 
@@ -354,8 +369,19 @@ Quando uma informação precisar ser recuperada posteriormente, o Tron deverá c
 
 Este princípio deve orientar as decisões de arquitetura do Tron AI.
 
+## Decisão sobre um segundo agente local
+
+Não será criado um segundo agente de IA para administrar o Agent Core. O próprio Core será o runtime local responsável por providers, Tools, Skills, credenciais, permissões, confirmações e pelo fluxo de execução.
+
+```text
+AI Provider → fornece inteligência
+Agent Core  → controla fluxo e regras
+Tool/Skill  → executa ação permitida
+```
+
 ## Documentação
 
 - [Contrato do Agent Core](README.md) — responsabilidades, providers e fluxo do Core.
 - [Objetivos e funcionalidades](objectives-and-features.md) — visão inicial do produto.
 - [Runtime](runtime.md) — primeira implementação e comunicação local.
+- [Estado e objetivos de desenvolvimento](development-status.md) — histórico, estado atual e próximos marcos.
