@@ -25,6 +25,46 @@ Este documento apresenta uma visão inicial. As funcionalidades, prioridades e d
 - Manter credenciais protegidas e separadas dos dados comuns da aplicação.
 - Permitir que o agente consulte fontes de verdade, como calendários, arquivos e serviços externos, quando necessário.
 
+## Estado atual do Agent Core
+
+O Core já possui um runtime local, integração real com Gemini, contrato de AI Provider e os primeiros contratos de identidade, contexto, respostas de AI e Tools.
+
+A próxima evolução é completar o fluxo interno de Tool Calling antes de avançar para autenticação, persistência e Skills reais.
+
+## Arquitetura de execução
+
+O Agent Core será o runtime local responsável pela orquestração.
+
+Não será criado um segundo agente de IA para administrar providers, credenciais ou Tools.
+
+O modelo fornece inteligência e pode solicitar uma Tool. O Core valida a solicitação, aplica permissões e confirmações, resolve credenciais e controla a execução.
+
+```text
+Cliente
+   ↓
+Agent Core
+   ├── Context / Memory
+   ├── Provider Manager
+   ├── Credential Manager
+   └── Tool Manager
+           ↓
+        Tool / Skill
+```
+
+## Contratos
+
+Os contratos iniciais do Core devem separar:
+- identidade do usuário;
+- contexto da execução;
+- comunicação com AI Providers;
+- Tool Calls;
+- definição e resultado de Tools;
+- permissões;
+- confirmações;
+- credenciais.
+
+Esses contratos devem permanecer pequenos e provider-neutral. Detalhes específicos de cada serviço devem ficar em seus adapters.
+
 ## Funcionalidades previstas
 
 ### Conversação
