@@ -1,10 +1,6 @@
-export type AIRequest = {
-  input: string;
-};
+import type { AIRequest, AIResponse } from "../types/ai.js";
 
-export type AIResponse = {
-  content: string;
-};
+export type { AIRequest, AIResponse } from "../types/ai.js";
 
 export interface AIProvider {
   generate(request: AIRequest): Promise<AIResponse>;
